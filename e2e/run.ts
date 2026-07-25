@@ -1,8 +1,10 @@
 import type { Spec, TestResult } from './types.js';
 import { runSpec } from './engine/lifecycle.js';
 import { printSuiteHeader, printSpecStart, printSpecResult, printSuiteSummary } from './reporting/console.js';
+import { generateHTMLReport } from './reporting/html.js';
 import { exampleSpec } from './specs/smoke/example.spec.js';
 import { saucedemoSpec } from './specs/smoke/saucedemo.spec.js';
+import { saucedemoAIFallbackSpec } from './specs/smoke/saucedemo-ai-fallback.spec.js';
 
 async function main(): Promise<void> {
   printSuiteHeader();
@@ -11,6 +13,7 @@ async function main(): Promise<void> {
   const specs: Spec[] = [
     exampleSpec,
     saucedemoSpec,
+    saucedemoAIFallbackSpec,
   ];
 
   const results: TestResult[] = [];
@@ -23,6 +26,10 @@ async function main(): Promise<void> {
   }
 
   printSuiteSummary(results);
+
+  // Generate HTML Report
+  const reportPath = generateHTMLReport(results);
+  console.log(`📊 HTML Report generated: file:///${reportPath.replace(/\\/g, '/')}`);
 
   const hasFailures = results.some((r) => !r.passed);
   if (hasFailures) {

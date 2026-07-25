@@ -9,8 +9,22 @@ export async function executeStep(page: Page, stagehand: Stagehand, step: Step):
   // Route to AI (Stagehand) if instruction is prefixed with 'ai:'
   if (instruction.startsWith('ai:')) {
     const aiAction = instruction.slice(3).trim();
-    await stagehand.page.act(aiAction);
-    return;
+    try {
+      const aiPromise = stagehand.page.act(aiAction);
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('AI decision timeout (5000ms)')), 5000)
+      );
+      await Promise.race([aiPromise, timeoutPromise]);
+      return;
+    } catch (err: any) {
+      // Hybrid Fallback: If AI step is slow or unconfigured, execute Playwright fallback locator
+      if (step.selector) {
+        console.warn(`⚠️ [AI Fallback Triggered] ${err.message}. Executing fallback locator: ${step.selector}`);
+        await page.locator(step.selector).click();
+        return;
+      }
+      throw err;
+    }
   }
 
   // Handle standard navigation instructions
@@ -42,7 +56,6 @@ export async function executeStep(page: Page, stagehand: Stagehand, step: Step):
   if (step.selector) {
     await page.locator(step.selector).click();
   } else {
-    // If no explicit selector is provided and not AI, try finding text or locator directly
     await page.locator(instruction).click();
   }
 }

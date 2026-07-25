@@ -18,6 +18,8 @@ export async function createSharedSession(): Promise<SharedBrowserSession> {
     env: config.stagehand.env,
     headless: config.stagehand.headless,
     modelName: config.stagehand.modelName,
+    modelClientOptions: config.stagehand.modelClientOptions,
+    apiKey: process.env.OPENAI_API_KEY || 'ollama',
     domSettleTimeoutMs: config.stagehand.domSettleTimeoutMs,
   });
 
